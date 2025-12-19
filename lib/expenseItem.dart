@@ -2,60 +2,71 @@ import 'package:flutter/material.dart';
 import 'expense.dart';
 
 class ExpenseItem extends StatelessWidget {
-  const ExpenseItem(this.expense, {super.key, required this.onRemove});
-
   final Expense expense;
-  final VoidCallback onRemove;
+  final void Function(int) onDismiss;
+  final void Function(Expense) onUndo;
+
+  const ExpenseItem({
+    super.key,
+    required this.expense,
+    required this.onDismiss,
+    required this.onUndo,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Dismissible(
-      key: ValueKey(expense.id),
-      direction: DismissDirection.endToStart,
-      onDismissed: (direction) {
-        onRemove();
-      },
+      key: Key(expense.title),
       background: Container(
+        padding: EdgeInsets.only(right: 20, left: 20),
+        margin: EdgeInsets.only(right: 20, left: 20),
         color: Colors.red,
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 16),
-        child: const Icon(Icons.delete, color: Colors.white),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [Icon(Icons.delete, color: Colors.white)],
+        ),
       ),
+      onDismissed: (direction) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${expense.title} dismissed'),
+            duration: const Duration(seconds: 2),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () {
+                onUndo(expense);
+              },
+            ),
+          ),
+        );
+        onDismiss(expense.id);
+      },
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Title
-              Text(
-                expense.title,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4),
-              // 2. Row containing Amount, Spacer, and Icon+Date
-              Row(
-                children: [
-                  // Amount
-                  Text('\$${expense.amount.toStringAsFixed(2)}'),
-
-                  // // INSTRUCTION: Use a spacer to handle space in the middle
-                  const Spacer(),
-
-                  // Icon + Date 
-                  Row(
-                    children: [
-                      // INSTRUCTION: Display an icon depending on category
-                      Icon(categoryIcons[expense.category]),
-                      const SizedBox(width: 8),
-                      // INSTRUCTION: Use intl package to format Date
-                      Text(expense.formattedDate),
-                    ],
-                  ),
-                ],
-              ),
-            ],
+        elevation: 2,
+        child: ListTile(
+          leading: CircleAvatar(
+            backgroundColor: Theme.of(context).primaryColorDark.withOpacity(0.1),
+            child: Icon(
+                categoryIcons[expense.category],
+                color: Colors.black87,
+            ),
+          ),
+          title: Text(
+            expense.title,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text(
+            expense.category.name[0].toUpperCase() +
+                expense.category.name.substring(1),
+            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+          ),
+          trailing: Text(
+            '\$ ${expense.amount.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),

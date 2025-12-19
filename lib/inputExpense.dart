@@ -19,13 +19,13 @@ class _InputexpenseState extends State<Inputexpense> {
   void _showDialog(String message){
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: const Text('Invalid Input'),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(ctx);
+              Navigator.pop(context);
             },
             child: const Text('OK'),
           ),
@@ -35,9 +35,9 @@ class _InputexpenseState extends State<Inputexpense> {
   }
 
   Future<void> _presentDatePicker() async {
-    final now = DateTime.now();
-    final firstDate = DateTime(now.year - 1);
-    final pickedDate = await showDatePicker(
+    final DateTime now = DateTime.now();
+    final DateTime firstDate = DateTime(now.year - 1);
+    final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: _selectedDate ?? now,
       firstDate: firstDate,
@@ -52,13 +52,14 @@ class _InputexpenseState extends State<Inputexpense> {
   }
 
   // Function to handle validation and submission
-  void _submitExpenseData() {
-    final enteredAmount = double.tryParse(_amountController.text);
-    final amountIsInvalid = enteredAmount == null || enteredAmount <= 0;
+  void _submitExpense() {
+    final double? enteredAmount = double.tryParse(_amountController.text);
+    final bool amountIsInvalid = enteredAmount == null || enteredAmount <= 0;
 
     // 1. Validate Title
     if (_titleController.text.trim().isEmpty || _titleController.text.trim() == '') {
       _showDialog('The title cannot be empty');
+      _titleController.clear();
       _amountController.clear();
       return;
     }
@@ -66,6 +67,7 @@ class _InputexpenseState extends State<Inputexpense> {
     // 2. Validate Amount
     if (amountIsInvalid) {
       _showDialog('The amount shall be a positive number');
+      _titleController.clear();
       _amountController.clear();
       return;
     }
@@ -77,6 +79,7 @@ class _InputexpenseState extends State<Inputexpense> {
     }
 
     final newExpense = Expense(
+      id: DateTime.now().millisecondsSinceEpoch,
       title: _titleController.text.trim(),
       amount: enteredAmount,
       date: _selectedDate!,
@@ -107,7 +110,7 @@ class _InputexpenseState extends State<Inputexpense> {
             decoration: const InputDecoration(
               label: Text('Title'),
             ),
-            onSubmitted: (_) => _submitExpenseData(),
+            onSubmitted: (_) => _submitExpense(),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -170,7 +173,7 @@ class _InputexpenseState extends State<Inputexpense> {
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
-                onPressed: _submitExpenseData,
+                onPressed: _submitExpense,
                 child: const Text('Save Expense'),
               ),
             ],
